@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini UI - Chat Interface</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        // Configurar marked.js para melhor renderização de markdown
+        if (typeof marked !== 'undefined') {
+            marked.setOptions({
+                breaks: true,           // Quebras de linha como <br>
+                gfm: true,              // GitHub Flavored Markdown
+                headerIds: true,        // IDs em cabeçalhos
+                mangle: false,          // Não "manusear" emails
+                sanitize: false,        // Permitir HTML (cuidado!)
+                smartLists: true,       // Listas inteligentes
+                smartypants: false,     // Não converter aspas
+                xhtml: false            // Não usar XHTML
+            });
+            
+            // Configurar renderer personalizado para preservar UTF-8
+            const renderer = new marked.Renderer();
+            marked.use({ renderer });
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="16" cy="16" r="14" fill="url(#gradient)"/>
+                    <path d="M16 8L20 14H12L16 8Z" fill="white"/>
+                    <path d="M16 24L12 18H20L16 24Z" fill="white"/>
+                    <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="32" y2="32">
+                            <stop offset="0%" stop-color="#4285f4"/>
+                            <stop offset="100%" stop-color="#9b72f2"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <h1>Gemini UI</h1>
+            </div>
+            <div class="header-actions">
+                <button id="themeToggleBtn" class="clear-btn" aria-label="Alternar tema" title="Alternar tema">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button id="templatesBtn" class="clear-btn" aria-label="Templates" title="Templates de prompts">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button id="exportBtn" class="clear-btn" aria-label="Exportar" title="Exportar conversa">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button id="clearHistoryBtn" class="clear-btn" aria-label="Limpar histórico" title="Limpar histórico">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                    </svg>
+                </button>
+                <div class="status" id="status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Conectado</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="chat-container" id="chatContainer">
+            <div class="welcome-message">
+                <h2>Olá! 👋</h2>
+                <p>Sou a interface web do Gemini CLI. Como posso ajudá-lo hoje?</p>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <div id="typingIndicator" class="typing-indicator" style="display: none;">
+                <div class="typing-content">
+                    <div class="message-icon typing-icon">G</div>
+                    <span>Gemini está digitando</span>
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+            <form id="chatForm">
+                <div class="input-wrapper">
+                    <input type="file" id="fileInput" style="display: none;">
+                    <button type="button" id="fileButton" class="image-button" aria-label="Anexar arquivo" title="Anexar arquivo para análise">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <textarea 
+                        id="promptInput" 
+                        placeholder="Digite sua mensagem aqui..." 
+                        rows="1"
+                    ></textarea>
+                    <button type="submit" id="sendButton" class="send-button" aria-label="Enviar mensagem">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="char-count">
+                    <span id="charCount">0</span> caracteres
+                    <span id="filePreview" style="margin-left: 10px; color: var(--success-color);"></span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
