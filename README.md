@@ -233,7 +233,7 @@ Crie um arquivo `.env` na raiz do projeto (use `.env.example` como referência):
 
 **Exemplo:**
 ```env
-GEMINI_API_KEY=yor_api_key=AIzaSyC...seu_key_aqui
+GEMINI_API_KEY=AIzaSyC
 SESSION_SECRET=sua_chave_secreta_aleatoria_aqui
 ```
 
